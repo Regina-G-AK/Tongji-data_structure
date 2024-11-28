@@ -90,13 +90,13 @@ int main()
         }
     }
     dist_all_to_grass = temp_dist;//保存从所有草地到其它点的距离
-    // Compute dist_grass_to_all
+    
     vector<vector<int>> dist_grass_to_all(grass_points.size(), vector<int>(N + 1, 0));
     for (size_t i = 0; i < grass_points.size(); ++i) 
     {
         dijkstra(adj, grass_points[i], dist_grass_to_all[i]);
     }
-    // Process each query
+
     for (int q = 0; q < R; ++q) 
     {
         int start, end;
