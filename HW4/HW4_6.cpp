@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <queue>
-#include <algorithm>
 #include <climits>
 using namespace std;
 
@@ -12,23 +11,23 @@ struct Edge {
 void dijkstra(const vector<vector<Edge>>& adj, int start, vector<int>& dist) 
 {
     const int INF = INT_MAX;
-    dist.assign(adj.size(), INF);// 初始化所有点到起点的距离为无穷大
-    dist[start] = 0;// 起点到自身的距离为0
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;// 最小堆存储当前点的最短路
-    pq.push({0, start});// 将起点加入优先队列
+    dist.assign(adj.size(), INF); // 初始化所有点到起点的距离为无穷大
+    dist[start] = 0; // 起点到自身的距离为0
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq; // 最小堆
+    pq.push({0, start}); // 将起点加入优先队列
     while (!pq.empty()) 
     {
-        int d = pq.top().first;// 当前点的最短距离
-        int u = pq.top().second;// 当前点编号
+        int d = pq.top().first;
+        int u = pq.top().second;
         pq.pop();
         if (d > dist[u]) 
-            continue;// 若当前距离不是最优，跳过
-        for (const Edge& e : adj[u]) //遍历邻接点
+            continue; // 若当前距离不是最优，跳过
+        for (const Edge& e : adj[u]) 
         {
-            if (dist[e.to] > dist[u] + e.weight) //若有更短路径
+            if (dist[e.to] > dist[u] + e.weight) 
             {
-                dist[e.to] = dist[u] + e.weight;// 更新目标点的距离
-                pq.push({dist[e.to], e.to});// 将目标点加入队列
+                dist[e.to] = dist[u] + e.weight;
+                pq.push({dist[e.to], e.to});
             }
         }
     }
@@ -55,8 +54,7 @@ int main()
         cin >> a;
         is_grass[a] = true;
     }
-    vector<vector<int>> dist_start_to_grass(R + 1, vector<int>(N + 1, 0));
-    vector<int> dist_all_to_grass(N + 1, 0);
+
     vector<int> grass_points;
     for (int i = 1; i <= N; ++i) 
     {
@@ -65,32 +63,8 @@ int main()
             grass_points.push_back(i);
         }
     }
-    
-    vector<int> temp_dist(N + 1, INT_MAX);// 暂存从草地到其它点的距离
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
-    for (int grass : grass_points) 
-    {
-        temp_dist[grass] = 0;
-        pq.push({0, grass});
-    }
-    while (!pq.empty()) 
-    {
-        int d = pq.top().first;
-        int u = pq.top().second;
-        pq.pop();
-        if (d > temp_dist[u]) 
-            continue;
-        for (const Edge& e : adj[u]) 
-        {
-            if (temp_dist[e.to] > temp_dist[u] + e.weight) 
-            {
-                temp_dist[e.to] = temp_dist[u] + e.weight;// 更新最短距离
-                pq.push({temp_dist[e.to], e.to});
-            }
-        }
-    }
-    dist_all_to_grass = temp_dist;//保存从所有草地到其它点的距离
-    
+
+    // 从每个草地点出发计算到所有点的最短路径
     vector<vector<int>> dist_grass_to_all(grass_points.size(), vector<int>(N + 1, 0));
     for (size_t i = 0; i < grass_points.size(); ++i) 
     {
@@ -101,33 +75,37 @@ int main()
     {
         int start, end;
         cin >> start >> end;
+
+        int min_dist = INT_MAX;
+
+        // 如果起点和终点是同一个点
         if (start == end) 
         {
             if (is_grass[start]) 
             {
-                cout << 0 << endl;
+                cout << 0 << endl; // 如果是草地，距离为0
             } 
             else 
             {
-                int min_dist = INT_MAX;
-                for (int grass : grass_points) 
+                // 从起点到最近的草地再返回起点
+                for (size_t i = 0; i < grass_points.size(); ++i) 
                 {
-                    int path = dist_all_to_grass[start] + dist_grass_to_all[0][start];
-                    min_dist = min(min_dist, path);
+                    min_dist = min(min_dist, dist_grass_to_all[i][start] * 2);
                 }
-                cout << min_dist << endl;
+                cout << (min_dist == INT_MAX ? -1 : min_dist) << endl;
             }
-        } 
-        else 
-        {
-            int min_dist = INT_MAX;
-            for (int grass : grass_points) 
-            {
-                int path = dist_all_to_grass[start] + dist_grass_to_all[0][end];
-                min_dist = min(min_dist, path);
-            }
-            cout << min_dist << endl;
+            continue;
         }
+
+        // 遍历所有草地点，计算从 start -> 草地 -> end 的最短路径
+        for (size_t i = 0; i < grass_points.size(); ++i) 
+        {
+            int path = dist_grass_to_all[i][start] + dist_grass_to_all[i][end];
+            min_dist = min(min_dist, path);
+        }
+
+        cout << (min_dist == INT_MAX ? -1 : min_dist) << endl;
     }
+
     return 0;
 }
