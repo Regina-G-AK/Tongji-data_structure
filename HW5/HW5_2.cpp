@@ -1,273 +1,160 @@
 #include <iostream>
+#include <queue>
 using namespace std;
 
 struct Node 
 {
     int val;
     int cnt;
-    Node* left;
-    Node* right;
+    Node* lchild;
+    Node* rchild;
 };
 
-struct BST 
+void createNode(Node*& n,int value)
 {
-    Node* root;
-    BST() : root(nullptr) {}
-};
-
-void insert(BST& tree, int x) 
-{
-    if (tree.root == nullptr) 
-    {
-        tree.root = new Node();
-        tree.root->val = x;
-        tree.root->cnt = 1;
-        tree.root->left = nullptr;
-        tree.root->right = nullptr;
-    } 
-    else 
-    {
-        Node* current = tree.root;
-        while (true) 
-        {
-            if (x < current->val) 
-            {
-                if (current->left == nullptr) 
-                {
-                    current->left = new Node();
-                    current->left->val = x;
-                    current->left->cnt = 1;
-                    current->left->left = nullptr;
-                    current->left->right = nullptr;
-                    break;
-                } 
-                else 
-                {
-                    current = current->left;
-                }
-            } 
-            else if (x > current->val) 
-            {
-                if (current->right == nullptr) 
-                {
-                    current->right = new Node();
-                    current->right->val = x;
-                    current->right->cnt = 1;
-                    current->right->left = nullptr;
-                    current->right->right = nullptr;
-                    break;
-                } 
-                else 
-                {
-                    current = current->right;
-                }
-            } 
-            else 
-            {
-                current->cnt++;
-                break;
-            }
-        }
-    }
+    n=new(nothrow) Node;
+    if(!n)
+        exit(-1);
+    n->val=value;
+    n->cnt=1;
+    n->lchild=n->rchild=nullptr;
 }
 
-int remove(BST& tree, int x) 
+void Insert(Node*& T, int value)
 {
-    Node* parent = nullptr;
-    Node* current = tree.root;
-    while (current != nullptr) 
-    {
-        if (x < current->val) 
-        {
-            parent = current;
-            current = current->left;
-        } 
-        else if (x > current->val) 
-        {
-            parent = current;
-            current = current->right;
-        } 
-        else 
-        {
-            if (current->cnt > 1)
-            {
-                current->cnt--;
-                return 1;
-            } 
-            else 
-            {
-                if (current->left == nullptr && current->right == nullptr) 
-                {
-                    if (parent == nullptr) 
-                    {
-                        tree.root = nullptr;
-                    } 
-                    else if (parent->left == current) 
-                    {
-                        parent->left = nullptr;
-                    } 
-                    else 
-                    {
-                        parent->right = nullptr;
-                    }
-                    delete current;
-                } 
-                else if (current->left == nullptr) 
-                {
-                    if (parent == nullptr) 
-                    {
-                        tree.root = current->right;
-                    } 
-                    else if (parent->left == current) 
-                    {
-                        parent->left = current->right;
-                    } 
-                    else 
-                    {
-                        parent->right = current->right;
-                    }
-                    delete current;
-                } 
-                else if (current->right == nullptr) 
-                {
-                    if (parent == nullptr) 
-                    {
-                        tree.root = current->left;
-                    } 
-                    else if (parent->left == current) 
-                    {
-                        parent->left = current->left;
-                    } 
-                    else 
-                    {
-                        parent->right = current->left;
-                    }
-                    delete current;
-                } 
-                else 
-                {
-                    Node* predecessor = current->left;
-                    Node* predecessorParent = current;
-                    while (predecessor->right != nullptr) 
-                    {
-                        predecessorParent = predecessor;
-                        predecessor = predecessor->right;
-                    }
-                    current->val = predecessor->val;
-                    current->cnt = predecessor->cnt;
-                    if (predecessorParent->left == predecessor) 
-                    {
-                        predecessorParent->left = predecessor->left;
-                    } 
-                    else 
-                    {
-                        predecessorParent->right = predecessor->left;
-                    }
-                    delete predecessor;
-                }
-                return 1;
-            }
-        }
-    }
-    return 0;
+	//根结点
+	if (!T)
+		createNode(T, value);
+	else if (T->val == value) {
+		T->cnt++;
+	}
+	else if (T->val > value) {
+		if (T->lchild)
+			Insert(T->lchild, value);
+		else
+			createNode(T->lchild, value);
+	}
+	else {
+		if (T->rchild)
+			Insert(T->rchild, value);
+		else
+			createNode(T->rchild, value);
+	}
 }
 
-int count(BST& tree, int x) 
+bool Delete(Node*& T, int value)
 {
-    Node* current = tree.root;
-    while (current != nullptr) 
-    {
-        if (x < current->val) 
-        {
-            current = current->left;
-        } 
-        else if (x > current->val) 
-        {
-            current = current->right;
-        } 
-        else 
-        {
-            return current->cnt;
-        }
-    }
-    return 0;
+	if (!T)
+		return false;  //没有该元素
+	else if (T->val == value) {
+		if (T->cnt != 1)
+			T->cnt--;
+		//只有单边子树
+		else if (!T->rchild) {
+			Node* q = T;
+			T = T->lchild;
+			delete q;
+		}
+		else if (!T->lchild) {
+			Node* q = T;
+			T = T->rchild;
+			delete q;
+		}
+		//有左右两子树
+		else {
+			Node* q = T, * s = T->lchild;
+			while (s->rchild) {
+				q = s;
+				s = s->rchild;
+			}
+			T->val = s->val;
+			T->cnt = s->cnt;
+			//特判如果一开始左孩子没有右子树 则q没有空出的右孩子来接s的左孩子
+			//(s原先在哪里就有哪边孩子空出)
+			if (q != T)
+				q->rchild = s->lchild;
+			else
+				q->lchild = s->lchild;
+			delete s;
+		}
+		return true;
+	}
+	else if (T->val > value)
+		return Delete(T->lchild, value);
+	else
+		return Delete(T->rchild, value);
 }
 
-int findMin(BST& tree) 
+int Search(Node* T, int value)
 {
-    Node* current = tree.root;
-    while (current->left != nullptr) 
-    {
-        current = current->left;
-    }
-    return current->val;
+	if (!T)
+		return 0;
+	else if (T->val == value)
+		return T->cnt;
+	else if (T->val > value) 
+		return Search(T->lchild, value);
+	else 
+		return Search(T->rchild, value);
 }
 
-int findPredecessor(BST& tree, int x) 
+int GetMin(Node* T)
 {
-    Node* current = tree.root;
-    Node* predecessor = nullptr;
-    while (current != nullptr) 
-    {
-        if (x <= current->val) 
-        {
-            current = current->left;
-        } 
-        else 
-        {
-            predecessor = current;
-            current = current->right;
-        }
-    }
-    if (predecessor != nullptr) 
-    {
-        Node* temp = predecessor->right;
-        while (temp != nullptr) 
-        {
-            predecessor = temp;
-            temp = temp->left;
-        }
-        return predecessor->val;
-    } 
-    else 
-    {
-        return -1; // 表示没有前驱
-    }
+	if (T->lchild)
+		return GetMin(T->lchild);
+	else
+		return T->val;
+}
+
+void Traverse(Node* T, queue<int>& q)
+{
+	if (!T)
+		return;
+	Traverse(T->lchild, q);
+	q.push(T->val);
+	Traverse(T->rchild, q);
 }
 
 int main() 
 {
     int n;
     cin >> n;
-    BST tree;
+    Node* root = nullptr;
     while (n--) 
     {
         int op;
         cin >> op;
+        
         switch (op) 
         {
             case 1:
                 int x;
                 cin >> x;
-                insert(tree, x);
+                Insert(root, x);
                 break;
             case 2:
                 cin >> x;
-                if (!remove(tree, x))
+                if (!Delete(root, x))
                     cout << "None" << endl;
                 break;
             case 3:
                 cin >> x;
-                cout << count(tree, x) << endl;
+                cout << Search(root, x) << endl;
                 break;
             case 4:
-                cout << findMin(tree) << endl;
+                cout << GetMin(root) << endl;
                 break;
             case 5:
                 cin >> x;
-                int pred = findPredecessor(tree, x);
-                if (pred != -1)
-                    cout << pred << endl;
+                queue<int> q;
+                Traverse(root,q);
+                int ans=-1;
+                while(!q.empty()&&q.front()<x)
+                {
+                    ans=q.front();
+                    q.pop();
+                }
+                if (ans != -1)
+                    cout << ans << endl;
                 else
                     cout << "None" << endl;
                 break;
