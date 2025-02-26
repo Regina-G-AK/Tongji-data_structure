@@ -22,20 +22,20 @@ using namespace std;
 /*     以下是你需要提交的代码     */
 /********************************/
 class Solution {
-public:
-    bool cmp(int a, int b) {
-        // 这里填写你的代码 
+private:
+    static bool cmp(int a, int b) 
+    {
         string sa = to_string(a);
         string sb = to_string(b);
         return sa + sb > sb + sa;
     }
-
+public:
     std::string largestNumber(std::vector<int>& nums) {
         // 这里填写你的代码 
-        // sort(nums.begin(), nums.end(), cmp); 
-        sort(nums.begin(), nums.end(), [this](int a, int b) {
-            return cmp(a, b);
-        });
+        sort(nums.begin(), nums.end(), Solution::cmp);
+        if (nums[0] == 0) {
+            return "0";
+        }
         string res;
         for (int i = 0; i < nums.size(); i++) {
             res += to_string(nums[i]);
